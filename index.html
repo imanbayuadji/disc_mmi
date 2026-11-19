@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=0c556e18-30e2-4823-854c-27f9636c3674
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Otomasi Profiling & Analisis Perilaku DISC (MMI)</title>
+    <!-- Tailwind Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            200: '#bcccdc',
+                            300: '#9fb3c8',
+                            400: '#829ab1',
+                            500: '#627d98',
+                            600: '#486581',
+                            700: '#334e68',
+                            800: '#243b53',
+                            900: '#102a43',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- React & ReactDOM (UMD Production) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel CDN for browser compilation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Custom print stylesheet */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .print-break {
+                page-break-before: always;
+            }
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-size: 11pt !important;
+            }
+            .card-shadow {
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+    <div id="root"></div>
+
+    <!-- React App Implementation -->
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Access Password Configuration
+        const APP_ACCESS_PASSWORD = "polije-iman";
+
+        // 24 MMI Questions Database with corresponding keys for Most (M) and Least (L)
+        const QUESTIONS_DATABASE = [
+            {
+                id: 1,
+                options: [
+                    { text: "Mudah bergaul, ramah", m: "S", l: "S" },
+                    { text: "Penuh kepercayaan, Percaya kepada orang lain", m: "I", l: "I" },
+                    { text: "Petualang, pengambil resiko", m: "D", l: "D" },
+                    { text: "Toleran, Penuh hormat", m: "*", l: "C" }
+                ]
+            },
+            {
+                id: 2,
+                options: [
+                    { text: "Lembut, Pendiam", m: "*", l: "C" },
+                    { text: "Optimis, Pengkhayal", m: "D", l: "D" },
+                    { text: "Pusat perhatian, Mudah bersosialisasi", m: "*", l: "I" },
+                    { text: "Pembuat perdamaian, Membawa ketenangan", m: "S", l: "S" }
+                ]
+            },
+            {
+                id: 3,
+                options: [
+                    { text: "Mendorong orang lain", m: "S", l: "S" },
+                    { text: "Berjuang demi kesempurnaan", m: "C", l: "C" },
+                    { text: "Menjadi bagian tim", m: "*", l: "*" },
+                    { text: "Berpihak pada oposisi", m: "I", l: "I" }
+                ]
+            },
+            {
+                id: 4,
+                options: [
+                    { text: "Ingin mencapai tujuan", m: "D", l: "D" },
+                    { text: "Menjadi frustasi", m: "*", l: "S" },
+                    { text: "Memendam perasaan dalam hati", m: "C", l: "C" },
+                    { text: "Menceritakan sisi kehidupan", m: "*", l: "*" }
+                ]
+            },
+            {
+                id: 5,
+                options: [
+                    { text: "Hidup, Cerewet", m: "*", l: "I" },
+                    { text: "Bekerja dengan cepat, Tekun", m: "D", l: "D" },
+                    { text: "Mencoba mempertahankan keseimbangan", m: "S", l: "S" },
+                    { text: "Mencoba mengikuti aturan", m: "C", l: "C" }
+                ]
+            },
+            {
+                id: 6,
+                options: [
+                    { text: "Mengatur waktu secara efisien", m: "D", l: "D" },
+                    { text: "Sering terburu-buru, Merasa tertekan", m: "*", l: "*" },
+                    { text: "Hal sosial merupakan hal penting", m: "I", l: "I" },
+                    { text: "Menyelesaikan apa yang telah dimulai", m: "S", l: "S" }
+                ]
+            },
+            {
+                id: 7,
+                options: [
+                    { text: "Tenang, Pendiam", m: "S", l: "S" },
+                    { text: "Menolak perubahan mendadak", m: "*", l: "D" },
+                    { text: "Cenderung sering berjanji", m: "I", l: "I" },
+                    { text: "Menyendiri jika dibawah tekanan", m: "*", l: "*" }
+                ]
+            },
+            {
+                id: 8,
+                options: [
+                    { text: "Tidak takut berkelahi", m: "D", l: "D" },
+                    { text: "Seorang pendukung yang baik", m: "S", l: "S" },
+                    { text: "Seorang pendengar yang baik", m: "*", l: "*" },
+                    { text: "Seorang penganalisa yang baik", m: "C", l: "C" }
+                ]
+            },
+            {
+                id: 9,
+                options: [
+                    { text: "Yang penting adalah hasil", m: "D", l: "D" },
+                    { text: "Melakukan dengan benar, ketepatan dihitung", m: "C", l: "C" },
+                    { text: "Buat menjadi menyenangkan", m: "I", l: "S" },
+                    { text: "Mari melakukan bersama", m: "*", l: "*" }
+                ]
+            },
+            {
+                id: 10,
+                options: [
+                    { text: "Akan melakukan tanpa Kontrol diri", m: "D", l: "D" },
+                    { text: "Akan membeli berdasar hasrat", m: "*", l: "I" },
+                    { text: "Akan menunggu, Tidak ada tekanan", m: "S", l: "S" },
+                    { text: "Akan membelanjakan apa yang saya inginkan", m: "*", l: "*" }
+                ]
+            },
+            {
+                id: 11,
+                options: [
+                    { text: "Ramah, Mudah berteman", m: "I", l: "*" },
+                    { text: "Unik, Bosan dengan rutinitas", m: "*", l: "I" },
+                    { text: "Aktif mengubah hal-hal", m: "D", l: "D" },
+                    { text: "Menginginkan sesuatu yang pasti", m: "*", l: "S" }
+                ]
+            },
+            {
+                id: 12,
+                options: [
+                    { text: "Non konfrontasi, Mengalah", m: "S", l: "S" },
+                    { text: "Penuh dengan rincian", m: "C", l: "C" },
+                    { text: "Perubahan pada menit terakhir", m: "*", l: "*" },
+                    { text: "Penuntut, Perusak", m: "D", l: "D" }
+                ]
+            },
+            {
+                id: 13,
+                options: [
+                    { text: "Menginginkan kemajuan", m: "D", l: "D" },
+                    { text: "Puas dengan beberapa hal, Mudah puas", m: "S", l: "S" },
+                    { text: "Menggambarkan perasaan secara terbuka", m: "I", l: "I" },
+                    { text: "Rendah hati, Sederhana", m: "*", l: "C" }
+                ]
+            },
+            {
+                id: 14,
+                options: [
+                    { text: "Berpikir logis, Sistematis", m: "C", l: "C" },
+                    { text: "Tenang, Pendiam", m: "S", l: "S" },
+                    { text: "Bahagia, Riang", m: "I", l: "I" },
+                    { text: "Menyenangkan, Baik", m: "*", l: "*" }
+                ]
+            },
+            {
+                id: 15,
+                options: [
+                    { text: "Tegas, Berani", m: "D", l: "D" },
+                    { text: "Menghabiskan waktu berharga dengan orang lain", m: "I", l: "I" },
+                    { text: "Merencanakan masa depan, menyiapkan diri", m: "C", l: "C" },
+                    { text: "Perjalanan menuju petualangan baru", m: "*", l: "*" }
+                ]
+            },
+            {
+                id: 16,
+                options: [
+                    { text: "Mendapat penghargaan jika mencapai tujuan", m: "D", l: "D" },
+                    { text: "Peraturan perlu ditolak", m: "*", l: "I" },
+                    { text: "Peraturan membuat adil", m: "C", l: "C" },
+                    { text: "Peraturan membuat bosan", m: "*", l: "*" }
+                ]
+            },
+            {
+                id: 17,
+                options: [
+                    { text: "Pendidikan, Kebudayaan", m: "*", l: "C" },
+                    { text: "Pencapaian, Penghargaan", m: "D", l: "D" },
+                    { text: "Keselamatan, keamanan", m: "S", l: "S" },
+                    { text: "Sosial, pertemuan kelompok", m: "I", l: "I" }
+                ]
+            },
+            {
+                id: 18,
+                options: [
+                    { text: "Bertanggung jawab, Pendekatan langsung", m: "D", l: "D" },
+                    { text: "Mudah bergaul, Antusias", m: "I", l: "I" },
+                    { text: "Mudah ditebak, Konsisten", m: "S", l: "S" },
+                    { text: "Waspada, Berhati-hati", m: "C", l: "C" }
+                ]
+            },
+            {
+                id: 19,
+                options: [
+                    { text: "Tidak mudah dikalahkan", m: "D", l: "D" },
+                    { text: "Akan melakukan sesuai perintah, mengikuti pimpinan", m: "S", l: "S" },
+                    { text: "Riang, Ceria", m: "I", l: "I" },
+                    { text: "Ingin segalanya teratur, Rapi", m: "C", l: "C" }
+                ]
+            },
+            {
+                id: 20,
+                options: [
+                    { text: "Saya akan pimpin mereka", m: "D", l: "D" },
+                    { text: "Saya akan mengikuti", m: "S", l: "S" },
+                    { text: "Saya akan bujuk mereka", m: "I", l: "I" },
+                    { text: "Saya akan mendapatkan fakta", m: "C", l: "C" }
+                ]
+            },
+            {
+                id: 21,
+                options: [
+                    { text: "Memikirkan orang lain dahulu", m: "S", l: "S" },
+                    { text: "Kompetitif, Menyukai tantangan", m: "D", l: "D" },
+                    { text: "Optimis, Positif", m: "I", l: "I" },
+                    { text: "Sederhana, Ramah", m: "*", l: "C" }
+                ]
+            },
+            {
+                id: 22,
+                options: [
+                    { text: "Tertawa keras, Hidup", m: "I", l: "I" },
+                    { text: "Berani, Tegas", m: "D", l: "D" },
+                    { text: "Tenang, Pendiam", m: "S", l: "S" },
+                    { text: "Menghindari konflik apapun", m: "C", l: "C" }
+                ]
+            },
+            {
+                id: 23,
+                options: [
+                    { text: "Menginginkan kekuasaan lebih", m: "D", l: "D" },
+                    { text: "Menginginkan kekuasaan baru", m: "*", l: "*" },
+                    { text: "Meninginkan arah yang jelas", m: "C", l: "C" },
+                    { text: "Bisa diandalkan, Bisa digantungkan", m: "S", l: "S" }
+                ]
+            },
+            {
+                id: 24,
+                options: [
+                    { text: "Kreatif, Unik", m: "*", l: "I" },
+                    { text: "Berorientasi kepada hasil, Inti", m: "D", l: "D" },
+                    { text: "Teguh standar tinggi, Akurat", m: "C", l: "*" },
+                    { text: "Peraturan membuat aman", m: "S", l: "S" }
+                ]
+            }
+        ];
+
+        // Raw-to-Scale conversions based on Indonesian MMI norms
+        const mapRawToScale = (graphNum, dimension, rawVal) => {
+            if (graphNum === 1) { // MOST (Graph 1)
+                if (dimension === 'D') {
+                    if (rawVal >= 21) return 8;
+                    if (rawVal >= 16) return 7;
+                    if (rawVal === 15) return 6;
+                    if (rawVal === 14) return 5;
+                    if (rawVal === 13) return 4;
+                    if (rawVal === 12) return 3;
+                    if (rawVal === 11) return 2;
+                    if (rawVal === 10) return 1;
+                    if (rawVal === 9) return 0;
+                    if (rawVal === 8) return -1;
+                    if (rawVal === 7) return -2;
+                    if (rawVal === 6) return -3;
+                    if (rawVal === 5) return -4;
+                    if (rawVal === 4) return -5;
+                    if (rawVal === 3) return -6;
+                    if (rawVal === 2) return -7;
+                    if (rawVal === 1) return -7;
+                    return -8;
+                }
+                if (dimension === 'I') {
+                    if (rawVal >= 19) return 8;
+                    if (rawVal >= 11) return 7;
+                    if (rawVal >= 9) return 6;
+                    if (rawVal === 8) return 5;
+                    if (rawVal === 7) return 4;
+                    if (rawVal === 6) return 3;
+                    if (rawVal === 5) return 2;
+                    if (rawVal === 4) return 1;
+                    if (rawVal === 3) return 0;
+                    if (rawVal === 2) return -2;
+                    if (rawVal === 1) return -5;
+                    return -8;
+                }
+                if (dimension === 'S') {
+                    if (rawVal >= 20) return 8;
+                    if (rawVal >= 13) return 7;
+                    if (rawVal >= 11) return 6;
+                    if (rawVal === 10) return 5;
+                    if (rawVal === 9) return 4;
+                    if (rawVal === 8) return 3;
+                    if (rawVal === 7) return 2;
+                    if (rawVal === 6) return 1;
+                    if (rawVal === 5) return 0;
+                    if (rawVal === 4) return -1;
+                    if (rawVal === 3) return -2;
+                    if (rawVal === 2) return -4;
+                    if (rawVal === 1) return -6;
+                    return -8;
+                }
+                if (dimension === 'C') {
+                    if (rawVal >= 17) return 8;
+                    if (rawVal >= 13) return 7;
+                    if (rawVal >= 11) return 6;
+                    if (rawVal >= 9) return 5;
+                    if (rawVal === 8) return 4;
+                    if (rawVal === 7) return 3;
+                    if (rawVal === 6) return 2;
+                    if (rawVal === 5) return 1;
+                    if (rawVal === 4) return 0;
+                    if (rawVal === 3) return -1;
+                    if (rawVal === 2) return -2;
+                    if (rawVal === 1) return -5;
+                    return -8;
+                }
+            } else if (graphNum === 2) { // LEAST (Graph 2)
+                if (dimension === 'D') {
+                    if (rawVal <= 1) return 8;
+                    if (rawVal === 2) return 6;
+                    if (rawVal === 3) return 4;
+                    if (rawVal === 4) return 2;
+                    if (rawVal === 5) return 0;
+                    if (rawVal === 6) return -1;
+                    if (rawVal <= 8) return -2;
+                    if (rawVal === 9) return -3;
+                    if (rawVal <= 11) return -4;
+                    if (rawVal === 12) return -5;
+                    if (rawVal <= 14) return -6;
+                    if (rawVal === 15) return -7;
+                    return -8;
+                }
+                if (dimension === 'I') {
+                    if (rawVal <= 1) return 8;
+                    if (rawVal === 2) return 6;
+                    if (rawVal === 3) return 4;
+                    if (rawVal === 4) return 2;
+                    if (rawVal === 5) return 0;
+                    if (rawVal === 6) return -2;
+                    if (rawVal === 7) return -4;
+                    if (rawVal === 8) return -5;
+                    if (rawVal === 9) return -6;
+                    if (rawVal === 10) return -7;
+                    return -8;
+                }
+                if (dimension === 'S') {
+                    if (rawVal <= 1) return 8;
+                    if (rawVal <= 3) return 6;
+                    if (rawVal === 4) return 4;
+                    if (rawVal === 5) return 2;
+                    if (rawVal === 6) return 0;
+                    if (rawVal === 7) return -2;
+                    if (rawVal === 8) return -3;
+                    if (rawVal === 9) return -4;
+                    if (rawVal === 10) return -5;
+                    if (rawVal <= 12) return -6;
+                    if (rawVal <= 14) return -7;
+                    return -8;
+                }
+                if (dimension === 'C') {
+                    if (rawVal <= 1) return 8;
+                    if (rawVal <= 3) return 6;
+                    if (rawVal === 4) return 4;
+                    if (rawVal === 5) return 2;
+                    if (rawVal === 6) return 0;
+                    if (rawVal === 7) return -2;
+                    if (rawVal === 8) return -3;
+                    if (rawVal === 9) return -4;
+                    if (rawVal === 10) return -5;
+                    if (rawVal <= 12) return -6;
+                    if (rawVal <= 14) return -7;
+                    return -8;
+                }
+            } else { // CHANGE (Graph 3)
+                if (dimension === 'D') {
+                    if (rawVal >= 15) return 8;
+                    if (rawVal >= 11) return 7;
+                    if (rawVal >= 7) return 6;
+                    if (rawVal >= 4) return 4;
+                    if (rawVal >= 2) return 2;
+                    if (rawVal >= 0) return 0;
+                    if (rawVal >= -2) return -1;
+                    if (rawVal >= -4) return -2;
+                    if (rawVal >= -7) return -4;
+                    if (rawVal >= -10) return -6;
+                    return -8;
+                }
+                if (dimension === 'I') {
+                    if (rawVal >= 12) return 8;
+                    if (rawVal >= 8) return 6;
+                    if (rawVal >= 5) return 4;
+                    if (rawVal >= 3) return 2;
+                    if (rawVal >= 1) return 0;
+                    if (rawVal === 0) return -1;
+                    if (rawVal >= -2) return -2;
+                    if (rawVal >= -4) return -4;
+                    if (rawVal >= -7) return -6;
+                    return -8;
+                }
+                if (dimension === 'S') {
+                    if (rawVal >= 12) return 8;
+                    if (rawVal >= 8) return 6;
+                    if (rawVal >= 5) return 4;
+                    if (rawVal >= 2) return 2;
+                    if (rawVal >= 0) return 0;
+                    if (rawVal >= -2) return -2;
+                    if (rawVal >= -4) return -4;
+                    if (rawVal >= -7) return -6;
+                    return -8;
+                }
+                if (dimension === 'C') {
+                    if (rawVal >= 11) return 8;
+                    if (rawVal >= 7) return 6;
+                    if (rawVal >= 4) return 4;
+                    if (rawVal >= 2) return 2;
+                    if (rawVal >= 0) return 0;
+                    if (rawVal >= -2) return -2;
+                    if (rawVal >= -4) return -4;
+                    if (rawVal >= -7) return -6;
+                    return -8;
+                }
+            }
+            return 0;
+        };
+
+        // Complete Behavioral database mapped from standard materials
+        const BEHAVIORAL_METADATA = {
+            D: {
+                title: "Dominance (Kekuasaan & Tantangan)",
+                desc: "Memiliki orientasi kuat pada hasil (result-oriented), menyukai tantangan langsung, memiliki asertivitas tinggi, serta cenderung mengambil kendali situasi atau memimpin jalannya eksekusi program.",
+                motivators: ["Kebebasan mengontrol diri sendiri dan mengarahkan orang lain", "Wewenang fungsional yang luas serta posisi otoritatif", "Kesempatan pemecahan masalah yang menantang dan non-rutin", "Penilaian kinerja yang objektif, berbasis target konkret"],
+                demotivators: ["Terlalu banyak restriksi birokratis atau aturan mikro", "Status subordinasi tanpa hak veto atau wewenang mengambil keputusan", "Terjebak dalam rutinitas operasional yang lambat", "Pengawasan ketat (micromanagement) dari atasan"],
+                preferredEnv: ["Iklim kerja cepat, dinamis, dan kompetitif", "Tanggung jawab langsung terhadap pemecahan masalah", "Kebebasan dari pengerjaan detail administratif harian"],
+                avoidedEnv: ["Kehilangan wibawa atau dinilai lemah di hadapan publik", "Situasi yang lambat, monoton, dan tidak memiliki visi perubahan", "Lingkungan yang membatasi inisiatif kepemimpinan"],
+                effectiveness: ["Belajar merumuskan keputusan secara terencana dan mendengar perspektif tim", "Meningkatkan penghargaan terhadap proses konsensus kelompok", "Melatih empati aktif serta menghindari respons komunikasi yang agresif", "Mengurangi kecenderungan bertindak impulsif demi hasil cepat"]
+            },
+            I: {
+                title: "Influence (Interaksi & Hubungan Sosial)",
+                desc: "Berfokus pada interaksi interpersonal yang positif, persuasi verbal, pembentukan relasi emosional yang hangat, ekspresi optimisme, serta penyatuan kelompok kerja.",
+                motivators: ["Lingkungan kerja demokratis yang apresiatif dan bersahabat", "Pengakuan sosial secara verbal maupun visual di hadapan publik", "Variasi penugasan kreatif dan peluang interaksi yang dinamis", "Kebebasan dari kekakuan analisis data numerik murni"],
+                demotivators: ["Interaksi sosial yang kaku, dingin, dan berjarak", "Keharusan melakukan kontrol data detail tanpa interaksi manusia", "Isolasi fisik maupun sosial dalam durasi pengerjaan yang lama", "Ketiadaan feedback positif atas kontribusi kreatif"],
+                preferredEnv: ["Iklim organisasi yang hangat, kolaboratif, dan ekspresif", "Adanya forum publik untuk bertukar pikiran secara kreatif", "Peluang berjejaring (networking) dengan pihak eksternal"],
+                avoidedEnv: ["Konfrontasi interpersonal yang destruktif", "Penolakan sosial dari kelompok atau tim internal", "Struktur kerja yang sangat terisolasi dan repetitif"],
+                effectiveness: ["Meningkatkan disiplin pengaturan waktu (time-management)", "Berlatih bersikap objektif dalam menilai kapasitas performa rekan kerja", "Meredam dorongan emosional yang bersifat impulsif", "Membiasakan diri menyusun kesimpulan berbasis data konkret"]
+            },
+            S: {
+                title: "Steadiness (Konsistensi & Harmoni)",
+                desc: "Memiliki tingkat loyalitas yang tinggi, pembawaan tenang, konsisten dalam penyelesaian tugas prosedural, pendengar yang andal, serta penjaga keharmonisan tim dari konflik merusak.",
+                motivators: ["Kepastian lingkungan kerja (job security) dan kejelasan prospek karir", "Perubahan sistemis yang berjalan bertahap dengan pendampingan", "Apresiasi yang tulus atas loyalitas dan dedikasi kontinyu", "Prosedur pelaksanaan tugas operasional yang terstruktur"],
+                demotivators: ["Perubahan alur kerja secara mendadak tanpa sosialisasi", "Tingkat persaingan interpersonal yang agresif di dalam tim", "Konfrontasi langsung atau kritik tajam yang bersifat personal", "Ketidakteraturan instruksi atau target yang berubah-ubah"],
+                preferredEnv: ["Lingkungan kerja kooperatif, harmonis, kekeluargaan, dan stabil", "Prosedur operasional standar (SOP) yang jelas dan teruji"],
+                avoidedEnv: ["Situasi konflik internal yang tidak terselesaikan (disharmoni)", "Kondisi kerja serba mendadak, tidak terencana, dan kacau", "Kehilangan kestabilan finansial atau kepastian jabatan"],
+                effectiveness: ["Melatih ketegasan (assertiveness) dalam mengekspresikan pendapat pribadi", "Meningkatkan adaptabilitas terhadap perubahan eksternal yang cepat", "Mengurangi kecenderungan menolak inisiatif baru secara langsung", "Belajar mendelegasikan tugas daripada memikul beban sendirian"]
+            },
+            C: {
+                title: "Compliance (Akurasi & Standar Kualitas)",
+                desc: "Berorientasi tinggi pada akurasi data (precision), kepatuhan terhadap parameter regulasi, objektivitas logis, analisis mendalam, serta menjaga kualitas output kerja.",
+                motivators: ["Kesempatan menghasilkan karya dengan akurasi dan standar tertinggi", "Kejelasan aturan, kode etik, dan instrumen operasional", "Pendekatan analitis logis dalam penyelesaian masalah organisasi", "Penghargaan berbasis spesialisasi keahlian teknis"],
+                demotivators: ["Instruksi kerja yang kontradiktif atau tidak logis", "Tuntutan penyelesaian tugas terburu-buru yang mengorbankan kualitas", "Keharusan bersosialisasi tanpa tujuan fungsional yang konkret", "Kurangnya kontrol kualitas (quality control) pada tingkat manajemen"],
+                preferredEnv: ["Lingkungan kerja profesional yang rasional dan berorientasi tugas", "Waktu yang memadai untuk melakukan verifikasi data"],
+                avoidedEnv: ["Kritik terbuka di hadapan publik terhadap hasil kerjanya", "Situasi perdebatan emosional tanpa landasan argumentasi ilmiah", "Kewajiban mengungkapkan detail kehidupan pribadi"],
+                effectiveness: ["Berlatih menerima kompromi atau toleransi pada hal-hal kecil", "Menyadari keterbatasan manusia dalam mengejar perfeksionisme", "Meningkatkan fleksibilitas cara kerja dalam merespons keterbatasan", "Melatih keterampilan komunikasi persuasif non-transaksional"]
+            }
+        };
+
+        // Matched Career Paths mapped from CAREER_GUIDELINES_DISC.pdf
+        const CAREER_GUIDELINES = {
+            "D": { title: "Drive - Independent Analysis", jobs: ["Attorney (Pengacara)", "Researcher (Peneliti)", "O & M Specialist", "Planning Consultant", "Transport Personnel", "Production Director/Manager/Supervisor", "Technologist", "Technical Troubleshooter", "Consultant", "Engineering Supervisor", "Wiraswasta Mandiri"] },
+            "DI": { title: "Inspirational-Entrepreneurial", jobs: ["General Management", "Public Relations Specialist", "Industrial Relations Manager", "Troubleshooting Specialist", "Sales & Marketing Management", "Promotor Bisnis", "Konsultan Manajemen", "Advertising Executive", "Dosen / Trainer Profesional", "Pialang Saham / Dealer"] },
+            "ID": { title: "Motivating-Promoting-Contactability", jobs: ["Sales & Marketing Director", "Public Relations Specialist", "Recruitment Consultant", "Politisi / Diplomat", "Wiraswasta / Founder", "Hotelier / Travel Executive", "Trainer / Presenter", "Theatrical Agent", "General Manager / Team Leader", "Corporate Attorney"] },
+            "DS": { title: "Investigating Specialist", jobs: ["Engineering & Production Supervisor", "Research Chemist (R&D)", "Strategic Planner", "Engineering Designer", "Systems Analyst", "Programmer Komputer", "Spesialis Operasional Komputer", "O & M Study Specialist", "Corporate Lawyer"] },
+            "SD": { title: "Specialist-Concentration", jobs: ["Investigator", "Researcher (Peneliti)", "Accountant / Auditor", "Production Supervisor", "Transport / Warehouse Supervisor", "Credit Controller", "Data Processing Supervisor", "Computer Specialist", "Quality Controller", "Designer Produk", "Project Engineer", "Administration Manager"] },
+            "DC": { title: "Creating & Innovating", jobs: ["Engineering Manager", "Research Chemist (R&D)", "Specialist Finance Officer", "Accountant / Auditor", "Quality Controller", "Project Leader", "Industrial Marketer", "Medical Specialist"] },
+            "CD": { title: "Creating", jobs: ["Engineering Manager", "Research Specialist (R&D)", "Specialist Finance Officer", "Senior Accountant", "Specialist Work Analyst", "Production Planning Management", "Safety Officer"] },
+            "DIS": { title: "Negotiating for Results", jobs: ["Engineering & Production Supervisor", "Sales Representative", "Sales Management", "Service Manager", "Distribution Manager", "Public Relations Officer", "Office Manager", "Customer Service Lead", "National Accounts Manager", "Project Manager"] },
+            "DIC": { title: "Accuracy-Drive", jobs: ["Technical/Scientific Director", "Finance Manager", "Production Planning Specialist", "Personnel Disciplines Advisor", "Credit Manager", "System Analyst", "Computers Consultant", "General Manager", "Industrial Relations Specialist"] },
+            "DSC": { title: "Organizing & Structuring", jobs: ["Chief Engineer", "Production Administrator", "Chief Accountant", "Research Planning Lead", "Personnel Advisor", "Credit Controller", "O & M Consultant", "Sistem Perancang", "Spesialis Keamanan", "Spesialis Medis", "Corporate Attorney"] },
+            "I": { title: "Approachability-Contactability", jobs: ["Promoting Specialist", "Demonstrator Produk", "Canvassing Lead", "Marketing Service Executive", "Public Relations Officer", "Dosen / Pengajar", "Advertising Executive", "Hotelier / Host", "Travel Agent Manager", "Politisi", "Sales Representative (Service)"] },
+            "IS": { title: "Counselling & Advisory Support", jobs: ["Personnel Welfare Officer", "Training Facilitator", "Hotelier / Travel Agent", "Dosen / Akademisi", "Speciality Sales Representative", "Beauty Therapist", "Psikolog Klinis / Konselor", "Nursing Lead", "Personal Assistant", "Executive Coach / Mentor"] },
+            "SI": { title: "Counselling", jobs: ["Personnel Welfare Officer", "Training Facilitator", "Hotelier / Travel Agent", "Lecturer", "Soft/Service Selling Lead", "Psikolog", "Nurse / Perawat", "Personal Assistant", "Speciality Sales Lead"] },
+            "IC": { title: "Specialist Communicator", jobs: ["Guru / Trainer", "Invention Analyst", "Specialist Selling (Computers/Capital)", "Project Engineer", "Service Engineer", "Supervising Specialist", "Public Relations Specialist", "Politisi", "Production Manager"] },
+            "ISD": { title: "Facilitating Specialist", jobs: ["Hotelier / General Manager", "Customer Service Lead", "Complaints Manager", "Recruiting Agent", "Sales Manager", "Marketing Service Specialist", "Public Relations Specialist", "Dosen / Narasumber", "Production Manager"] },
+            "IDC": { title: "Specialist Negotiator", jobs: ["Specialist/Technical Sales", "Financial Manager", "Engineering Designer / Buyer", "Project Engineer", "Corporate Consultant", "Corporate Trainer", "Travel Agent Manager", "Marketing Services Director"] },
+            "ISC": { title: "Counselling-Negotiating-Advising", jobs: ["Personnel Welfare Specialist", "Teaching / Training Specialist", "Attorney", "Accountant / Auditor", "Technical Instructor", "Customer Service Lead", "Public Relations Analyst", "Draughtsman / Designer", "Purchasing Agent", "Administrative Specialist"] },
+            "SCI": { title: "Counselling-Negotiating-Advising (Compliance Path)", jobs: ["Personnel Advisor", "Welfare Trainer", "Teaching Lead", "Attorney", "Accounting Supervisor", "Technical Instructor", "Customer Service Lead", "Artist / Designer", "Specialist Selling Agent", "Draughtsman", "Purchasing Lead", "Secretarial Specialist"] },
+            "S": { title: "Persistence & Execution", jobs: ["Administrative Coordinator", "Engineering Draughtsman", "Project Technician", "Service Specialist", "Accountant", "Research and Development Associate", "Tele-Sales Representative"] },
+            "SC": { title: "Administrative Specialist", jobs: ["Office Manager", "Chief Clerk", "General Administrator", "Production Supervisor", "Planner", "Accountant", "Research & Development Specialist", "Project Manager", "Draughtsman", "Company Secretary", "System Analyst", "Programmer", "Statistisi"] },
+            "SDI": { title: "Servicing & Operational Support", jobs: ["Engineering & Production Supervisor", "Service Selling Specialist", "Warehouse & Distribution Lead", "Office Manager", "Customer Service Representative", "Systems Analyst", "Programmer", "Accounting Specialist", "Draughtsman", "Project Engineer"] },
+            "C": { title: "Researcher & Precision Analyst", jobs: ["Strategic Planner", "Installation Engineer", "Technical Chemist", "Academic Researcher", "Statistician", "Quality Controller"] },
+            "CI": { title: "Shrewdness & Sensitivity", jobs: ["Technical/Specialist Sales", "Public Relations Specialist", "Lecturer / Academic", "Personnel Administration Specialist", "Purchasing Agent", "Travel Agent Specialist", "Project Engineer", "Service Engineer"] },
+            "CS": { title: "Technical Precision Analyst", jobs: ["Researcher / Chemist", "Quality Control Inspector", "Project Engineer", "Draughtsman / Designer", "Cost Accountant", "Computer Programmer", "Surgeon", "Medical Specialist"] },
+            "CDI": { title: "Influence of Facts", jobs: ["Director / Manager (Engineering/Finance/Planning)", "Systems Designer", "O & M Specialist", "Work Study Analyst", "Technical Sales Executive", "Lecturer", "Company Secretary", "Negotiator", "Purchasing Specialist"] },
+            "CSI": { title: "Information-Collecting & Imparting", jobs: ["Engineering Supervisor", "Research Supervisor", "Trainer / Instructor", "Finance Supervisor / Advisor", "Public Relations Executive", "Office Administrator", "Market Analyst", "Systems Analyst", "Programmer", "Technical Seller"] },
+            "CSD": { title: "Perfectionism & Quality Assurance", jobs: ["Engineering/Research Director", "Production/Finance Manager", "Work Study Specialist", "O & M Analyst", "Corporate Accountant", "General Administrator", "Quality Controller", "Safety Officer", "Market Analyst", "Planner", "MIS Manager", "Security Manager", "Loss Control Specialist"] }
+        };
+
+        // Clean lookup helper to match patterns regardless of letter ordering
+        const matchPatternToGuidelines = (pattern) => {
+            if (!pattern) return { title: "General Specialist", jobs: ["Analyst", "Consultant", "Administrative Lead"] };
+            const letters = pattern.split('').sort().join('');
+            
+            // Generate possibilities based on permutations
+            const keys = Object.keys(CAREER_GUIDELINES);
+            for (let k of keys) {
+                const kSorted = k.split('').sort().join('');
+                if (kSorted === letters) {
+                    return CAREER_GUIDELINES[k];
+                }
+            }
+            // Fallback to highest single letters
+            const primary = pattern[0];
+            if (CAREER_GUIDELINES[primary]) return CAREER_GUIDELINES[primary];
+            return { title: "General Professional", jobs: ["Strategic Specialist", "Operation Consultant", "Independent Analyst"] };
+        };
+
+        // App Entry Component
+        function App() {
+            // Authentication State
+            const [isAuthenticated, setIsAuthenticated] = useState(() => {
+                try {
+                    return sessionStorage.getItem("disc_mmi_auth") === "true";
+                } catch (e) {
+                    return false;
+                }
+            });
+            const [passwordInput, setPasswordInput] = useState("");
+            const [authError, setAuthError] = useState("");
+            const [showPassword, setShowPassword] = useState(false);
+
+            const [candidate, setCandidate] = useState({
+                name: "Rizky Pratama",
+                age: "28",
+                gender: "L",
+                id: "DISC-2026-0042"
+            });
+            const [answers, setAnswers] = useState({});
+            const [activeTab, setActiveTab] = useState("test"); // 'instructions' | 'test' | 'result'
+            const [feedback, setFeedback] = useState(null);
+            const [showNormTable, setShowNormTable] = useState(false);
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (passwordInput === APP_ACCESS_PASSWORD) {
+                    setIsAuthenticated(true);
+                    try {
+                        sessionStorage.setItem("disc_mmi_auth", "true");
+                    } catch (err) {}
+                    setAuthError("");
+                    setPasswordInput("");
+                } else {
+                    setAuthError("Kata sandi akses salah. Silakan masukkan kata sandi yang sesuai.");
+                }
+            };
+
+            const handleLogout = () => {
+                setIsAuthenticated(false);
+                try {
+                    sessionStorage.removeItem("disc_mmi_auth");
+                } catch (err) {}
+                setPasswordInput("");
+                setAuthError("");
+            };
+
+            // Compute RAW values
+            const scoringResult = useMemo(() => {
+                let rawMost = { D: 0, I: 0, S: 0, C: 0, Star: 0 };
+                let rawLeast = { D: 0, I: 0, S: 0, C: 0, Star: 0 };
+
+                for (let qId = 1; qId <= 24; qId++) {
+                    const ans = answers[qId];
+                    if (ans) {
+                        if (ans.m !== null && ans.m !== undefined) {
+                            const keyM = QUESTIONS_DATABASE[qId - 1].options[ans.m].m;
+                            if (keyM === '*') rawMost.Star++;
+                            else rawMost[keyM]++;
+                        }
+                        if (ans.l !== null && ans.l !== undefined) {
+                            const keyL = QUESTIONS_DATABASE[qId - 1].options[ans.l].l;
+                            if (keyL === '*') rawLeast.Star++;
+                            else rawLeast[keyL]++;
+                        }
+                    }
+                }
+
+                // CHANGE: Most - Least
+                let rawChange = {
+                    D: rawMost.D - rawLeast.D,
+                    I: rawMost.I - rawLeast.I,
+                    S: rawMost.S - rawLeast.S,
+                    C: rawMost.C - rawLeast.C
+                };
+
+                // Compute standard MMI scaled scores [-8 to 8]
+                const scaleScores = {
+                    g1: {
+                        D: mapRawToScale(1, 'D', rawMost.D),
+                        I: mapRawToScale(1, 'I', rawMost.I),
+                        S: mapRawToScale(1, 'S', rawMost.S),
+                        C: mapRawToScale(1, 'C', rawMost.C),
+                    },
+                    g2: {
+                        D: mapRawToScale(2, 'D', rawLeast.D),
+                        I: mapRawToScale(2, 'I', rawLeast.I),
+                        S: mapRawToScale(2, 'S', rawLeast.S),
+                        C: mapRawToScale(2, 'C', rawLeast.C),
+                    },
+                    g3: {
+                        D: mapRawToScale(3, 'D', rawChange.D),
+                        I: mapRawToScale(3, 'I', rawChange.I),
+                        S: mapRawToScale(3, 'S', rawChange.S),
+                        C: mapRawToScale(3, 'C', rawChange.C),
+                    }
+                };
+
+                // Validity logic checks
+                let validity = { isValid: true, reasons: [] };
+                if (rawMost.Star > 9 || rawLeast.Star > 9) {
+                    validity.isValid = false;
+                    validity.reasons.push("Jumlah total kemunculan simbol Bintang (*) pada respons subjek melebihi ambang batas psikometris yang ditoleransi (maksimal 9 kali). Hal ini mengindikasikan adanya kecenderungan bias pencitraan sosial (social desirability) atau ketidakpastian tinggi dalam memilih ekstremitas respons.");
+                }
+
+                // Check conflict conditions: Graph 1 completely conflicts with Graph 2
+                let conflictsCount = 0;
+                ['D', 'I', 'S', 'C'].forEach(dim => {
+                    const sign1 = Math.sign(scaleScores.g1[dim]);
+                    const sign2 = Math.sign(scaleScores.g2[dim]);
+                    if (sign1 !== 0 && sign2 !== 0 && sign1 !== sign2) {
+                        conflictsCount++;
+                    }
+                });
+                if (conflictsCount === 4) {
+                    validity.isValid = false;
+                    validity.reasons.push("Seluruh arah faktor (100% dimensi) pada Grafik 1 (Public Self) saling bertolak belakang secara ekstrem dengan Grafik 2 (Private Self). Kontradiksi ekstrem ini menandakan distorsi respons yang signifikan, manipulasi sengaja, atau kurangnya pemahaman terhadap makna kosakata soal.");
+                } else if (conflictsCount === 3) {
+                    validity.isValid = false;
+                    validity.reasons.push("Tiga dari empat dimensi perilaku (75%) antara Grafik 1 dan Grafik 2 menunjukkan arah yang saling bertentangan secara ekstrem. Konstruk profil dinyatakan memiliki reliabilitas internal yang sangat rendah.");
+                }
+
+                // Check transition pattern / extreme narrowness on graph 3
+                const g3Values = Object.values(scaleScores.g3);
+                const g3Span = Math.max(...g3Values) - Math.min(...g3Values);
+                if (g3Span <= 2) {
+                    validity.reasons.push("Grafik 3 (Mirror/Perceived Self) menunjukkan pola transisi menyempit secara khusus (flat line di sekitar garis tengah). Fenomena psikologis ini mengindikasikan adanya krisis identitas peran, transisi karir yang membingungkan, atau kelelahan mental (burnout) yang dialami subjek.");
+                }
+
+                return {
+                    rawMost,
+                    rawLeast,
+                    rawChange,
+                    scaleScores,
+                    validity
+                };
+            }, [answers]);
+
+            // Number of completed questions
+            const completedCount = useMemo(() => {
+                let count = 0;
+                for (let qId = 1; qId <= 24; qId++) {
+                    const ans = answers[qId];
+                    if (ans && ans.m !== null && ans.l !== null) {
+                        count++;
+                    }
+                }
+                return count;
+            }, [answers]);
+
+            // Custom selection handler with built-in conflict safety
+            const handleSelect = (questionId, optionIndex, type) => {
+                setAnswers(prev => {
+                    const updated = { ...prev };
+                    if (!updated[questionId]) {
+                        updated[questionId] = { m: null, l: null };
+                    }
+                    if (type === 'm') {
+                        updated[questionId].m = optionIndex;
+                        if (updated[questionId].l === optionIndex) {
+                            updated[questionId].l = null; // deselect L
+                        }
+                    } else {
+                        updated[questionId].l = optionIndex;
+                        if (updated[questionId].m === optionIndex) {
+                            updated[questionId].m = null; // deselect M
+                        }
+                    }
+                    return updated;
+                });
+            };
+
+            // Loading Mock Data for instant comprehensive analysis demonstration
+            const loadMockProfile = (type) => {
+                let mockAns = {};
+                switch(type) {
+                    case 'highD':
+                        QUESTIONS_DATABASE.forEach(q => {
+                            let idxM = q.options.findIndex(o => o.m === 'D');
+                            let idxL = q.options.findIndex(o => o.l === 'C' || o.l === '*');
+                            if (idxM === -1) idxM = 0;
+                            if (idxL === -1 || idxL === idxM) idxL = (idxM + 1) % 4;
+                            mockAns[q.id] = { m: idxM, l: idxL };
+                        });
+                        setCandidate({ name: "Ronal Siahaan", age: "35", gender: "L", id: "DISC-MOCK-HI-D" });
+                        break;
+                    case 'highI':
+                        QUESTIONS_DATABASE.forEach(q => {
+                            let idxM = q.options.findIndex(o => o.m === 'I');
+                            let idxL = q.options.findIndex(o => o.l === 'D' || o.l === 'C');
+                            if (idxM === -1) idxM = 1;
+                            if (idxL === -1 || idxL === idxM) idxL = (idxM + 1) % 4;
+                            mockAns[q.id] = { m: idxM, l: idxL };
+                        });
+                        setCandidate({ name: "Shinta Devina", age: "27", gender: "P", id: "DISC-MOCK-HI-I" });
+                        break;
+                    case 'highS':
+                        QUESTIONS_DATABASE.forEach(q => {
+                            let idxM = q.options.findIndex(o => o.m === 'S');
+                            let idxL = q.options.findIndex(o => o.l === 'D' || o.l === 'I');
+                            if (idxM === -1) idxM = 2;
+                            if (idxL === -1 || idxL === idxM) idxL = (idxM + 1) % 4;
+                            mockAns[q.id] = { m: idxM, l: idxL };
+                        });
+                        setCandidate({ name: "Budi Santoso", age: "40", gender: "L", id: "DISC-MOCK-HI-S" });
+                        break;
+                    case 'highC':
+                        QUESTIONS_DATABASE.forEach(q => {
+                            let idxM = q.options.findIndex(o => o.m === 'C');
+                            let idxL = q.options.findIndex(o => o.l === 'I' || o.l === '*');
+                            if (idxM === -1) idxM = 3;
+                            if (idxL === -1 || idxL === idxM) idxL = (idxM + 1) % 4;
+                            mockAns[q.id] = { m: idxM, l: idxL };
+                        });
+                        setCandidate({ name: "dr. Amelia Fitri", age: "31", gender: "P", id: "DISC-MOCK-HI-C" });
+                        break;
+                    case 'invalid':
+                        QUESTIONS_DATABASE.forEach(q => {
+                            let idxM = q.options.findIndex(o => o.m === '*');
+                            let idxL = q.options.findIndex(o => o.l === '*');
+                            if (idxM === -1) idxM = 0;
+                            if (idxL === -1 || idxL === idxM) idxL = (idxM + 1) % 4;
+                            mockAns[q.id] = { m: idxM, l: idxL };
+                        });
+                        setCandidate({ name: "Kandidat Invalid", age: "22", gender: "L", id: "DISC-MOCK-INVALID" });
+                        break;
+                    default:
+                        mockAns = {};
+                }
+                setAnswers(mockAns);
+                setFeedback({ type: "success", message: `Profil model (${type}) berhasil dimuat! Buka tab "Grafik & Analisis" untuk mengamati keluaran psikometri.` });
+                setTimeout(() => setFeedback(null), 4000);
+            };
+
+            const resetAssessment = () => {
+                setAnswers({});
+                setFeedback({ type: "info", message: "Lembar penilaian instrumen DISC berhasil dikosongkan secara keseluruhan." });
+                setTimeout(() => setFeedback(null), 3000);
+            };
+
+            // Trigger Lucide icons reload whenever UI states change to avoid missing icons
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, [isAuthenticated, showPassword, authError, activeTab, feedback, showNormTable]);
+
+            // Calculate Stress, Movement & Core Pattern Results for narrative output
+            const analysisMetrics = useMemo(() => {
+                const g2 = scoringResult.scaleScores.g2;
+                const g3 = scoringResult.scaleScores.g3;
+
+                // 1. Determine High dimensions (Core/Private Style)
+                let highTraits = [];
+                const sortedCore = Object.entries(g2).sort((a, b) => b[1] - a[1]);
+                if (sortedCore[0][1] > 0) {
+                    highTraits = sortedCore.filter(item => item[1] > 0).map(item => item[0]);
+                } else {
+                    highTraits = [sortedCore[0][0]]; // Fallback to highest if all are non-positive
+                }
+                const pattern = highTraits.join('');
+
+                // 2. Identify Stress Potential & Sources (Movement logic)
+                const sMost = scoringResult.scaleScores.g1.S;
+                const sLeast = scoringResult.scaleScores.g2.S;
+                const sMovement = Math.abs(sMost - sLeast);
+
+                const iMost = scoringResult.scaleScores.g1.I;
+                const iLeast = scoringResult.scaleScores.g2.I;
+                const iMovement = Math.abs(iMost - iLeast);
+
+                let stressLevel = "Rendah";
+                let stressSource = "Tidak Terdeteksi";
+
+                const isDIHighestG3 = g3.D > 0 || g3.I > 0;
+                const isCSHighestG3 = g3.C > 0 || g3.S > 0;
+
+                if (isDIHighestG3 && sMovement > 4) {
+                    stressLevel = "Tinggi";
+                } else if (isCSHighestG3 && sMovement > 2) {
+                    stressLevel = "Sedang / Moderat";
+                } else if (sMovement > 3) {
+                    stressLevel = "Sedang";
+                }
+
+                if (stressLevel !== "Rendah") {
+                    stressSource = iMovement >= 2 ? "Faktor Profesional / Tekanan Struktural Lingkungan Kerja" : "Faktor Intrapersonal / Konflik Internal Individual";
+                }
+
+                // Match layout rules & shapes
+                let structuralShape = "Normal / Stabil";
+                let shapeNarrative = "";
+
+                const g1 = scoringResult.scaleScores.g1;
+                const allG1Above = Object.values(g1).every(v => v > 0);
+                const allG3Below = Object.values(g3).every(v => v < 0);
+
+                if (allG1Above) {
+                    structuralShape = "Above Mid Line (Overloaded / Tuntutan Berlebih)";
+                    shapeNarrative = "Grafik subjek memperlihatkan profil 'Above Mid Line' secara dominan pada Grafik 1 (Mask). Ini merupakan indikasi klinis bahwa subjek saat ini tengah menanggung kelelahan beban kerja eksternal yang sangat tinggi (overloaded). Subjek secara sadar memaksakan diri untuk memenuhi seluruh ekspektasi lingkungan di luar batas kapasitas adaptasi alaminya.";
+                } else if (allG3Below) {
+                    structuralShape = "Below Mid Line (Kekecewaan Mendalam / Demotivasi)";
+                    shapeNarrative = "Profil subjek mendatar di bawah garis median pada Grafik II dan III ('Below Mid Line'). Kondisi ini mencerminkan fase kekecewaan, kepasifan kronis, kesedihan mendalam, serta hilangnya motivasi (demotivasi) dalam lingkungan profesional akibat ekspektasi yang tidak terealisasi.";
+                }
+
+                // Complex patterns for automated insights
+                let transitionInsights = [];
+                // Flick-up C / Flick-down C
+                if (g3.S < 0 && g3.C < 0) {
+                    if (g3.C >= g3.S) {
+                        transitionInsights.push("Pola Flick-Up C Terdeteksi: Meskipun subjek memiliki kecenderungan dasar untuk bersikap mandiri dan bebas dari konformitas ketat, ia menunjukkan kesediaan fungsional yang tinggi untuk mematuhi regulasi serta SOP tertulis organisasi demi tercapainya keamanan sistemis.");
+                    } else {
+                        transitionInsights.push("Pola Flick-Down C Terdeteksi: Menunjukkan kecenderungan untuk memprioritaskan independensi mutlak, bertindak soliter, kaku pada prinsip pribadi, serta berpotensi menentang arus birokrasi fungsional organisasi.");
+                    }
+                }
+                // Indecisiveness D-C paired
+                if (g2.D < 0 && g2.C < 0) {
+                    transitionInsights.push("D & C Rendah secara Simultan (Kecenderungan Prokrastinasi): Subjek menghadapi hambatan berat dalam merumuskan keputusan strategis mandiri dan cenderung mengalami paralisis tindakan saat menghadapi penolakan eksternal.");
+                } else if (g2.D > 2 && g2.C > 2) {
+                    transitionInsights.push("D & C Tinggi secara Simultan (Konflik Kebimbangan Akut): Subjek mengalami distorsi internal akibat tarik-menarik antara ambisi eksekusi cepat (High D) dengan ketakutan melakukan kesalahan teknis/perfeksionisme kaku (High C).");
+                }
+
+                return {
+                    pattern,
+                    stressLevel,
+                    stressSource,
+                    sMovement,
+                    iMovement,
+                    structuralShape,
+                    shapeNarrative,
+                    primaryCore: sortedCore[0][0],
+                    transitionInsights
+                };
+            }, [scoringResult]);
+
+            // Beautiful SVG Graph Plotter
+            const renderSVGGraph = (graphNum, title, scores) => {
+                const width = 280;
+                const height = 300;
+                const padding = 35;
+                const xStep = (width - padding * 2) / 3;
+
+                // Scale value coordinate y positioning (Scores map from +8 down to -8)
+                const getYCoordinate = (scoreVal) => {
+                    const clamped = Math.max(-8, Math.min(8, scoreVal));
+                    const percentage = (8 - clamped) / 16; // 0 at +8, 1 at -8
+                    return padding + percentage * (height - padding * 2);
+                };
+
+                const dims = ['D', 'I', 'S', 'C'];
+                const points = dims.map((dim, idx) => ({
+                    x: padding + idx * xStep,
+                    y: getYCoordinate(scores[dim]),
+                    val: scores[dim],
+                    label: dim
+                }));
+
+                const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+                return (
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center">
+                        <h4 className="font-semibold text-slate-700 text-sm mb-3">{title}</h4>
+                        <svg width={width} height={height} className="overflow-visible">
+                            {/* Outer Border */}
+                            <rect x={padding} y={padding} width={width - padding*2} height={height - padding*2} fill="#faf9f6" stroke="#cbd5e1" strokeWidth="1.5" />
+                            
+                            {/* Mid-Line Area (Neutral Zone between -2 and +2) */}
+                            <rect 
+                                x={padding} 
+                                y={getYCoordinate(2)} 
+                                width={width - padding*2} 
+                                height={getYCoordinate(-2) - getYCoordinate(2)} 
+                                fill="#f1f5f9" 
+                                opacity="0.7" 
+                            />
+
+                            {/* Standard Grid Lines */}
+                            {[-8, -6, -4, -2, 0, 2, 4, 6, 8].map(tick => {
+                                const y = getYCoordinate(tick);
+                                const isMid = tick === 0;
+                                return (
+                                    <g key={tick}>
+                                        <line 
+                                            x1={padding - 5} 
+                                            y1={y} 
+                                            x2={width - padding + 5} 
+                                            y2={y} 
+                                            stroke={isMid ? "#f43f5e" : "#e2e8f0"} 
+                                            strokeWidth={isMid ? "1.5" : "1"} 
+                                            strokeDasharray={isMid ? "0" : "2 2"}
+                                        />
+                                        <text x={padding - 10} y={y + 4} textAnchor="end" className="text-[9px] font-medium fill-slate-400">{tick}</text>
+                                    </g>
+                                );
+                            })}
+
+                            {/* Vertical Columns for D I S C */}
+                            {dims.map((dim, idx) => {
+                                const x = padding + idx * xStep;
+                                return (
+                                    <line 
+                                        key={dim}
+                                        x1={x} 
+                                        y1={padding} 
+                                        x2={x} 
+                                        y2={height - padding} 
+                                        stroke="#cbd5e1" 
+                                        strokeWidth="1"
+                                    />
+                                );
+                            })}
+
+                            {/* Connection Lines */}
+                            <path d={linePath} fill="none" stroke="#1e293b" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+                            {/* Data Point Nodes */}
+                            {points.map((p) => (
+                                <g key={p.label}>
+                                    <circle cx={p.x} cy={p.y} r="6" fill="#2563eb" stroke="#ffffff" strokeWidth="2" className="cursor-pointer transition-all hover:r-8" />
+                                    <text x={p.x} y={p.y - 10} textAnchor="middle" className="text-[10px] font-bold fill-blue-600">{p.val}</text>
+                                </g>
+                            ))}
+
+                            {/* Bottom Label Indicators */}
+                            {dims.map((dim, idx) => {
+                                const x = padding + idx * xStep;
+                                return (
+                                    <text key={dim} x={x} y={height - padding + 18} textAnchor="middle" className="text-[11px] font-bold fill-slate-600">{dim}</text>
+                                );
+                            })}
+                        </svg>
+                    </div>
+                );
+            };
+
+            const completedPercentage = Math.round((completedCount / 24) * 100);
+
+            // Authentication Gate Screen
+            if (!isAuthenticated) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-brand-900 via-brand-800 to-slate-900 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+                            <div className="bg-brand-900 px-6 py-8 text-center text-white border-b border-brand-800">
+                                <div className="inline-flex items-center justify-center bg-white/10 p-3.5 rounded-xl border border-white/20 mb-4">
+                                    <i data-lucide="shield-check" className="w-9 h-9 text-blue-300"></i>
+                                </div>
+                                <h1 className="text-xl font-bold tracking-tight">Sistem Otomasi Profiling DISC MMI</h1>
+                                <p className="text-xs text-brand-200 mt-1.5">Analisis Psikometri Marston Model Indonesia (MMI)</p>
+                            </div>
+
+                            <form onSubmit={handleLogin} className="p-6 sm:p-8 space-y-5">
+                                <div>
+                                    <label htmlFor="access-password" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                                        Kata Sandi Akses Sistem
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                                            <i data-lucide="lock" className="w-4 h-4"></i>
+                                        </span>
+                                        <input
+                                            id="access-password"
+                                            type={showPassword ? "text" : "password"}
+                                            value={passwordInput}
+                                            onChange={(e) => {
+                                                setPasswordInput(e.target.value);
+                                                if (authError) setAuthError("");
+                                            }}
+                                            placeholder="Masukkan kata sandi..."
+                                            autoFocus
+                                            required
+                                            className="w-full pl-10 pr-10 py-2.5 text-sm font-medium text-slate-800 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                                            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                                        >
+                                            <i data-lucide={showPassword ? "eye-off" : "eye"} className="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {authError && (
+                                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+                                        <i data-lucide="alert-circle" className="w-4 h-4 shrink-0"></i>
+                                        <span>{authError}</span>
+                                    </div>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                                >
+                                    <i data-lucide="log-in" className="w-4 h-4"></i>
+                                    <span>Buka Akses Aplikasi</span>
+                                </button>
+                            </form>
+
+                            <div className="bg-slate-50 px-6 py-3.5 border-t border-slate-100 text-center">
+                                <p className="text-[11px] text-slate-400">© 2026 Iman N Bajuasijadji • Akses Terbatas Asesor & Administrator</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    {/* Header Banner - Fixed/Sticky Top-0 so it remains pinned on scroll */}
+                    <header className="sticky top-0 z-50 bg-gradient-to-r from-brand-900 to-brand-800 text-white shadow-lg no-print w-full">
+                        <div className="max-w-7xl mx-auto px-4 py-5 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-white/10 p-2.5 rounded-lg border border-white/20">
+                                    <i data-lucide="brain-circuit" className="w-8 h-8 text-blue-300"></i>
+                                </div>
+                                <div>
+                                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Sistem Otomasi Profiling DISC MMI</h1>
+                                    <p className="text-xs text-brand-200 mt-0.5">Analisis Psikometri Akurat berdasarkan Marston Model Indonesia (MMI)</p>
+                                </div>
+                            </div>
+                            
+                            {/* Fast Navigation Control Tabs */}
+                            <div className="flex flex-wrap items-center gap-2 bg-brand-900/40 p-1.5 rounded-lg border border-brand-700/50">
+                                <button 
+                                    onClick={() => setActiveTab("instructions")} 
+                                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${activeTab === 'instructions' ? 'bg-blue-600 text-white shadow' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
+                                >
+                                    <i data-lucide="info" className="w-3.5 h-3.5"></i> Panduan
+                                </button>
+                                <button 
+                                    onClick={() => setActiveTab("test")} 
+                                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${activeTab === 'test' ? 'bg-blue-600 text-white shadow' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
+                                >
+                                    <i data-lucide="clipboard-list" className="w-3.5 h-3.5"></i> Lembar Tes 
+                                    <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded-full">{completedCount}/24</span>
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        if (completedCount < 24) {
+                                            setFeedback({ type: "error", message: "Harap selesaikan seluruh 24 pertanyaan terlebih dahulu atau muat profil simulasi di tab administrator." });
+                                            setTimeout(() => setFeedback(null), 4000);
+                                        } else {
+                                            setActiveTab("result");
+                                        }
+                                    }}
+                                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${activeTab === 'result' ? 'bg-blue-600 text-white shadow' : completedCount < 24 ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
+                                >
+                                    <i data-lucide="bar-chart-3" className="w-3.5 h-3.5"></i> Grafik & Analisis
+                                </button>
+                                <button
+                                    onClick={handleLogout}
+                                    title="Kunci Akses Aplikasi"
+                                    className="px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 text-rose-200 hover:text-white hover:bg-rose-600/80 border border-rose-400/20"
+                                >
+                                    <i data-lucide="lock" className="w-3.5 h-3.5"></i> Kunci
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Print Only Header */}
+                    <div className="hidden print-only p-4 border-b border-slate-300 mb-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-2xl font-bold">Laporan Diagnostik Kepribadian DISC MMI</h1>
+                                <p className="text-xs text-slate-500">Hasil Analisis Psikometri Otomatis Profesional</p>
+                            </div>
+                            <div className="text-right text-xs">
+                                <p className="font-semibold">Sistem MMI V1.2</p>
+                                <p className="text-slate-500">Tanggal: {new Date().toLocaleDateString('id-ID')}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Global Notification Feedback Panel */}
+                    {feedback && (
+                        <div className="max-w-7xl mx-auto px-4 mt-4 w-full no-print">
+                            <div className={`p-3.5 rounded-lg border flex items-center gap-2.5 shadow-sm text-sm ${feedback.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : feedback.type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
+                                <i data-lucide={feedback.type === 'success' ? 'check-circle' : feedback.type === 'error' ? 'alert-octagon' : 'info'} className="w-5 h-5 shrink-0"></i>
+                                <p>{feedback.message}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Dynamic View Panel content */}
+                    <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+                        
+                        {/* Tab 1: Guidelines / Panduan */}
+                        {activeTab === 'instructions' && (
+                            <div className="space-y-6">
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                    <h2 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                        <i data-lucide="book-open" className="text-blue-500"></i> Panduan Pengisian DISC (Marston Model Indonesia)
+                                    </h2>
+                                    <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                                        Asesmen DISC dirancang untuk memetakan dinamika perilaku kerja dan kepribadian seseorang berdasarkan 4 pilar utama: <strong>Dominance (D)</strong>, <strong>Influence (I)</strong>, <strong>Steadiness (S)</strong>, dan <strong>Compliance (C)</strong>.
+                                    </p>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                        <div className="p-4 bg-brand-50 rounded-xl border border-brand-100">
+                                            <h3 className="font-bold text-brand-800 mb-1">1. Pilih M (Most/+)</h3>
+                                            <p className="text-xs text-slate-600">Pilih satu pernyataan dari empat alternatif yang <strong>paling mencerminkan diri Anda</strong> dalam kondisi lingkungan kerja.</p>
+                                        </div>
+                                        <div className="p-4 bg-brand-50 rounded-xl border border-brand-100">
+                                            <h3 className="font-bold text-brand-800 mb-1">2. Pilih L (Least/-)</h3>
+                                            <p className="text-xs text-slate-600">Pilih satu pernyataan lain dari kelompok yang sama yang <strong>paling tidak mencerminkan diri Anda</strong>.</p>
+                                        </div>
+                                        <div className="p-4 bg-brand-50 rounded-xl border border-brand-100">
+                                            <h3 className="font-bold text-brand-800 mb-1">3. Durasi Pengerjaan</h3>
+                                            <p className="text-xs text-slate-600">Durasi ideal pengerjaan adalah <strong>7 s.d 12 menit</strong>. Selesaikan secara spontan tanpa terlalu lama memikirkan maknanya.</p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-6 flex gap-3">
+                                        <button onClick={() => setActiveTab("test")} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all">
+                                            Mulai Pengisian Tes
+                                        </button>
+                                        <button onClick={() => loadMockProfile('highD')} className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-2.5 px-5 rounded-lg transition-all">
+                                            Simulasi Cepat (Mock Data)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Tab 2: Test Grid Lembar Pengisian */}
+                        {activeTab === 'test' && (
+                            <div className="space-y-6">
+                                {/* Top Assessment Header Cards */}
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2">
+                                        <h3 className="font-bold text-slate-800 text-sm mb-4">Informasi Biodata Kandidat</h3>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-500 mb-1">Nama Lengkap</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={candidate.name} 
+                                                    onChange={(e) => setCandidate({ ...candidate, name: e.target.value })} 
+                                                    className="w-full text-sm font-semibold border border-slate-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-500 outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-500 mb-1">ID No. Tes</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={candidate.id} 
+                                                    onChange={(e) => setCandidate({ ...candidate, id: e.target.value })} 
+                                                    className="w-full text-sm font-semibold border border-slate-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-500 outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-500 mb-1">Jenis Kelamin</label>
+                                                <div className="flex gap-4 mt-2">
+                                                    <label className="inline-flex items-center text-sm gap-1 cursor-pointer">
+                                                        <input type="radio" name="gender" checked={candidate.gender === 'L'} onChange={() => setCandidate({...candidate, gender: 'L'})} className="text-blue-600 focus:ring-0" />
+                                                        <span>Laki-laki (L)</span>
+                                                    </label>
+                                                    <label className="inline-flex items-center text-sm gap-1 cursor-pointer">
+                                                        <input type="radio" name="gender" checked={candidate.gender === 'P'} onChange={() => setCandidate({...candidate, gender: 'P'})} className="text-blue-600 focus:ring-0" />
+                                                        <span>Perempuan (P)</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-500 mb-1">Umur (Tahun)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={candidate.age} 
+                                                    onChange={(e) => setCandidate({ ...candidate, age: e.target.value })} 
+                                                    className="w-full text-sm font-semibold border border-slate-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-500 outline-none"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Sidebar actions & instant simulation tooltips */}
+                                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                                        <div>
+                                            <h3 className="font-bold text-slate-800 text-sm mb-1 flex items-center gap-1.5">
+                                                <i data-lucide="gauge" className="w-4 h-4 text-blue-500"></i> Simulator & Admin Tools
+                                            </h3>
+                                            <p className="text-[11px] text-slate-400 mb-4">Muat profil terkalibrasi otomatis untuk menguji pembacaan grafik dan generator laporan.</p>
+                                            
+                                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                                <button onClick={() => loadMockProfile('highD')} className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-1.5 px-2 rounded-lg font-medium transition-all">
+                                                    High D (Director)
+                                                </button>
+                                                <button onClick={() => loadMockProfile('highI')} className="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 py-1.5 px-2 rounded-lg font-medium transition-all">
+                                                    High I (Marketing)
+                                                </button>
+                                                <button onClick={() => loadMockProfile('highS')} className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 py-1.5 px-2 rounded-lg font-medium transition-all">
+                                                    High S (Support)
+                                                </button>
+                                                <button onClick={() => loadMockProfile('highC')} className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 py-1.5 px-2 rounded-lg font-medium transition-all">
+                                                    High C (Analytical)
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-2">
+                                            <button onClick={resetAssessment} className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-800 border border-slate-200 py-2 rounded-lg text-xs font-semibold transition-all">
+                                                Reset Lembar Tes
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Progress and validation bar status */}
+                                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                    <div className="flex-1">
+                                        <div className="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                                            <span>Progress Pengisian</span>
+                                            <span>{completedPercentage}% ({completedCount} / 24 Soal)</span>
+                                        </div>
+                                        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                            <div className="bg-blue-600 h-2.5 transition-all duration-500" style={{ width: `${completedPercentage}%` }}></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        {completedCount === 24 ? (
+                                            <button 
+                                                onClick={() => setActiveTab("result")} 
+                                                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-6 rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all"
+                                            >
+                                                Lihat Laporan Grafik <i data-lucide="arrow-right" className="w-4 h-4"></i>
+                                            </button>
+                                        ) : (
+                                            <div className="text-xs font-semibold text-slate-400 bg-slate-50 border border-slate-200 py-2.5 px-4 rounded-lg flex items-center gap-1.5">
+                                                <i data-lucide="lock" className="w-3.5 h-3.5"></i> Selesaikan 24 Soal untuk Melihat Analisis
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 24 Questions Rows Grid */}
+                                <div className="space-y-4">
+                                    {QUESTIONS_DATABASE.map((q, idx) => {
+                                        const ans = answers[q.id] || { m: null, l: null };
+                                        return (
+                                            <div key={q.id} className={`p-5 rounded-2xl border transition-all ${ans.m !== null && ans.l !== null ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-50/50 border-slate-200'}`}>
+                                                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-4">
+                                                    <span className="inline-flex items-center justify-center bg-brand-900 text-white font-bold text-xs w-6 h-6 rounded-md">
+                                                        {q.id}
+                                                    </span>
+                                                    <span className="text-xs font-semibold text-slate-400">
+                                                        {ans.m !== null && ans.l !== null ? (
+                                                            <span className="text-emerald-600 flex items-center gap-1">
+                                                                <i data-lucide="check" className="w-3.5 h-3.5"></i> Terisi
+                                                            </span>
+                                                        ) : "Belum Lengkap"}
+                                                    </span>
+                                                </div>
+
+                                                {/* Four Adjectives list Grid */}
+                                                <div className="space-y-3">
+                                                    {q.options.map((opt, optIdx) => {
+                                                        const isSelectedM = ans.m === optIdx;
+                                                        const isSelectedL = ans.l === optIdx;
+                                                        return (
+                                                            <div key={optIdx} className="flex items-center justify-between py-2 px-3 hover:bg-slate-50 rounded-lg transition-all border border-transparent hover:border-slate-100">
+                                                                <span className="text-sm font-medium text-slate-700">{opt.text}</span>
+                                                                
+                                                                <div className="flex items-center gap-4">
+                                                                    {/* Most Selection Button */}
+                                                                    <button 
+                                                                        onClick={() => handleSelect(q.id, optIdx, 'm')}
+                                                                        className={`w-14 text-center py-1 text-xs font-bold rounded border transition-all ${isSelectedM ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                                                                    >
+                                                                        Most (+)
+                                                                    </button>
+                                                                    {/* Least Selection Button */}
+                                                                    <button 
+                                                                        onClick={() => handleSelect(q.id, optIdx, 'l')}
+                                                                        className={`w-14 text-center py-1 text-xs font-bold rounded border transition-all ${isSelectedL ? 'bg-rose-600 text-white border-rose-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                                                                    >
+                                                                        Least (-)
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Tab 3: Detailed Psychological Report View & Visualizations */}
+                        {activeTab === 'result' && (
+                            <div className="space-y-8">
+                                {/* Print Actions bar */}
+                                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 text-sm">Laporan Hasil Diagnosis DISC Berhasil Dibuat</h3>
+                                        <p className="text-xs text-slate-400">Gunakan tombol cetak di sebelah kanan untuk ekspor ke format kertas / PDF.</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm flex items-center justify-center gap-2 transition-all">
+                                            <i data-lucide="printer" className="w-4 h-4"></i> Cetak Laporan / Simpan PDF
+                                        </button>
+                                        <button onClick={() => setActiveTab("test")} className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-2.5 px-4 rounded-lg transition-all">
+                                            Kembali ke Form Soal
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* SECTION 1: Bio Profil Resume */}
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                    <h3 className="font-bold text-slate-800 text-sm mb-4 border-b border-slate-100 pb-2">Informasi & Resume Kandidat</h3>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                                        <div>
+                                            <p className="text-slate-400 font-medium">Nama Kandidat</p>
+                                            <p className="text-sm font-bold text-slate-800 mt-0.5">{candidate.name}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-400 font-medium">ID No. Tes</p>
+                                            <p className="text-sm font-bold text-slate-800 mt-0.5">{candidate.id}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-400 font-medium">Jenis Kelamin / Usia</p>
+                                            <p className="text-sm font-bold text-slate-800 mt-0.5">{candidate.gender === 'L' ? 'Laki-laki (L)' : 'Perempuan (P)'} / {candidate.age} Tahun</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-400 font-medium">Gaya Perilaku Inti (Core)</p>
+                                            <p className="text-sm font-bold text-blue-600 mt-0.5">Tipe {analysisMetrics.pattern || "N/A"}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* SECTION 2: Validity Banner */}
+                                <div className={`p-5 rounded-2xl border ${scoringResult.validity.isValid ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
+                                    <div className="flex items-start gap-3">
+                                        <i data-lucide={scoringResult.validity.isValid ? "check-circle" : "alert-triangle"} className="w-6 h-6 shrink-0 mt-0.5"></i>
+                                        <div>
+                                            <h4 className="font-bold text-sm">Status Validitas Grafik: {scoringResult.validity.isValid ? "VALID" : "PERINGATAN VALIDITAS (INVALID)"}</h4>
+                                            <p className="text-xs mt-1 text-slate-600 leading-relaxed">
+                                                {scoringResult.validity.isValid 
+                                                    ? "Sistem tidak mendeteksi anomali ekstrem. Pola pengisian konsisten dan representasi grafis dapat dipercaya untuk diinterpretasi." 
+                                                    : "Ditemukan indikasi anomali pada hasil pengisian sebagai berikut:"}
+                                            </p>
+                                            {scoringResult.validity.reasons.length > 0 && (
+                                                <ul className="list-disc list-inside text-xs mt-2 space-y-1 text-slate-700">
+                                                    {scoringResult.validity.reasons.map((r, i) => <li key={i}>{r}</li>)}
+                                                </ul>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* SECTION 3: Lembar Penghitungan Nilai (Scoring Matrix Table) */}
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                    <div className="flex justify-between items-center border-b border-slate-100 pb-2 mb-4">
+                                        <h3 className="font-bold text-slate-800 text-sm">Lembar Penghitungan Nilai (Scoring Matrix Table)</h3>
+                                        <button 
+                                            onClick={() => setShowNormTable(!showNormTable)} 
+                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-all flex items-center gap-1 no-print"
+                                        >
+                                            <i data-lucide={showNormTable ? "eye-off" : "eye"} className="w-3.5 h-3.5"></i> 
+                                            {showNormTable ? "Sembunyikan Tabel Norma" : "Tampilkan Tabel Norma Asli MMI"}
+                                        </button>
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-xs text-left border-collapse">
+                                            <thead>
+                                                <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                                                    <th className="p-2.5">Baris / Kategori</th>
+                                                    <th className="p-2.5 text-center">D</th>
+                                                    <th className="p-2.5 text-center">I</th>
+                                                    <th className="p-2.5 text-center">S</th>
+                                                    <th className="p-2.5 text-center">C</th>
+                                                    <th className="p-2.5 text-center font-semibold text-amber-600">* (Bintang)</th>
+                                                    <th className="p-2.5 text-center">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                                                <tr>
+                                                    <td className="p-2.5 font-semibold text-slate-900">Baris 1: MOST (M)</td>
+                                                    <td className="p-2.5 text-center">{scoringResult.rawMost.D} <span className="text-[10px] text-slate-400">({scoringResult.scaleScores.g1.D})</span></td>
+                                                    <td className="p-2.5 text-center">{scoringResult.rawMost.I} <span className="text-[10px] text-slate-400">({scoringResult.scaleScores.g1.I})</span></td>
+                                                    <td className="p-2.5 text-center">{scoringResult.rawMost.S} <span className="text-[10px] text-slate-400">({scoringResult.scaleScores.g1.S})</span></td>
+                                                    <td className="p-2.5 text-center">{scoringResult.rawMost.C} <span className="text-[10px] text-slate-400">({scoringResult.scaleScores.g1.C})</span></td>
+                                                    <td className="p-2.5 text-center text-amber-600">{scoringResult.rawMost.Star}</td>
+                                                    <td className="p-2.5 text-center font-bold text-slate-950">
+                                                        {scoringResult.rawMost.D + scoringResult.rawMost.I + scoringResult.rawMost.S + scoringResult.rawMost.C + scoringResult.rawMost.Star}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="p-2.5 font-semibold text-slate-900">Baris 2: LEAST (L)</td>
+                                                    <td className="p-2.5 text-center">{scoringResult.rawLeast.D} <span className="text-[10px] text-slate-400">({scoringResult.scaleScores.g2.D})</span></td>
+                                                    <td className="p-2.5 text-center">{scoringResult.rawLeast.I} <span className="text-[10px] text-slate-400">({scoringResult.scaleScores.g2.I})</span></td>
+                                                    <td className="p-2.5 text-center">{scoringResult.rawLeast.S} <span className="text-[10px] text-slate-400">({scoringResult.scaleScores.g2.S})</span></td>
+                                                    <td className="p-2.5 text-center">{scoringResult.rawLeast.C} <span className="text-[10px] text-slate-400">({scoringResult.scaleScores.g2.C})</span></td>
+                                                    <td className="p-2.5 text-center text-amber-600">{scoringResult.rawLeast.Star}</td>
+                                                    <td className="p-2.5 text-center font-bold text-slate-950">
+                                                        {scoringResult.rawLeast.D + scoringResult.rawLeast.I + scoringResult.rawLeast.S + scoringResult.rawLeast.C + scoringResult.rawLeast.Star}
+                                                    </td>
+                                                </tr>
+                                                <tr className="bg-blue-50/40">
+                                                    <td className="p-2.5 font-semibold text-brand-900">Baris 3: CHANGE (M - L)</td>
+                                                    <td className="p-2.5 text-center text-blue-800 font-semibold">{scoringResult.rawChange.D} <span className="text-[10px] text-slate-500">({scoringResult.scaleScores.g3.D})</span></td>
+                                                    <td className="p-2.5 text-center text-blue-800 font-semibold">{scoringResult.rawChange.I} <span className="text-[10px] text-slate-500">({scoringResult.scaleScores.g3.I})</span></td>
+                                                    <td className="p-2.5 text-center text-blue-800 font-semibold">{scoringResult.rawChange.S} <span className="text-[10px] text-slate-500">({scoringResult.scaleScores.g3.S})</span></td>
+                                                    <td className="p-2.5 text-center text-blue-800 font-semibold">{scoringResult.rawChange.C} <span className="text-[10px] text-slate-500">({scoringResult.scaleScores.g3.C})</span></td>
+                                                    <td className="p-2.5 text-center text-slate-400">-</td>
+                                                    <td className="p-2.5 text-center text-slate-400">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-3">* Catatan: Total Baris MOST dan LEAST masing-masing harus bernilai tepat 24. Angka di dalam tanda kurung menunjukkan nilai skala hasil konversi grafik (-8 s.d 8) berdasarkan norma Marston Model Indonesia (MMI).</p>
+
+                                    {/* Collapsible Original Norm Matrix Table */}
+                                    {showNormTable && (
+                                        <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-4 no-print transition-all duration-300">
+                                            <h4 className="font-bold text-slate-800 text-xs">Tabel Norma MMI (Konversi Skor Mentah ke Sumbu Y Grafik)</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[11px]">
+                                                <div className="bg-white p-3 rounded border">
+                                                    <h5 className="font-bold text-slate-900 mb-1.5 border-b pb-1 text-[11px]">NORMA MOST (Grafik 1)</h5>
+                                                    <p className="text-slate-600 leading-relaxed text-[10px]">
+                                                        <strong>D:</strong> &ge;21&rarr;8 | 16-20&rarr;7 | 15&rarr;6 | 14&rarr;5 | 13&rarr;4 | 12&rarr;3 | 11&rarr;2 | 10&rarr;1 | 9&rarr;0 | 8&rarr;-1 | 7&rarr;-2 | 6&rarr;-3 | 5&rarr;-4 | 4&rarr;-5 | 3&rarr;-6 | 1-2&rarr;-7 | 0&rarr;-8<br/>
+                                                        <strong>I:</strong> &ge;19&rarr;8 | 11-18&rarr;7 | 9-10&rarr;6 | 8&rarr;5 | 7&rarr;4 | 6&rarr;3 | 5&rarr;2 | 4&rarr;1 | 3&rarr;0 | 2&rarr;-2 | 1&rarr;-5 | 0&rarr;-8<br/>
+                                                        <strong>S:</strong> &ge;20&rarr;8 | 13-19&rarr;7 | 11-12&rarr;6 | 10&rarr;5 | 9&rarr;4 | 8&rarr;3 | 7&rarr;2 | 6&rarr;1 | 5&rarr;0 | 4&rarr;-1 | 3&rarr;-2 | 2&rarr;-4 | 1&rarr;-6 | 0&rarr;-8<br/>
+                                                        <strong>C:</strong> &ge;17&rarr;8 | 13-16&rarr;7 | 11-12&rarr;6 | 9-10&rarr;5 | 8&rarr;4 | 7&rarr;3 | 6&rarr;2 | 5&rarr;1 | 4&rarr;0 | 3&rarr;-1 | 2&rarr;-2 | 1&rarr;-5 | 0&rarr;-8
+                                                    </p>
+                                                </div>
+                                                <div className="bg-white p-3 rounded border">
+                                                    <h5 className="font-bold text-slate-900 mb-1.5 border-b pb-1 text-[11px]">NORMA LEAST (Grafik 2)</h5>
+                                                    <p className="text-slate-600 leading-relaxed text-[10px]">
+                                                        <strong>D:</strong> 0-1&rarr;8 | 2&rarr;6 | 3&rarr;4 | 4&rarr;2 | 5&rarr;0 | 6&rarr;-1 | 7-8&rarr;-2 | 9&rarr;-3 | 10-11&rarr;-4 | 12&rarr;-5 | 13-14&rarr;-6 | 15&rarr;-7 | &ge;16&rarr;-8<br/>
+                                                        <strong>I:</strong> 0-1&rarr;8 | 2&rarr;6 | 3&rarr;4 | 4&rarr;2 | 5&rarr;0 | 6&rarr;-2 | 7&rarr;-4 | 8&rarr;-5 | 9&rarr;-6 | 10&rarr;-7 | &ge;11&rarr;-8<br/>
+                                                        <strong>S:</strong> 0-1&rarr;8 | 2-3&rarr;6 | 4&rarr;4 | 5&rarr;2 | 6&rarr;0 | 7&rarr;-2 | 8&rarr;-3 | 9&rarr;-4 | 10&rarr;-5 | 11-12&rarr;-6 | 13-14&rarr;-7 | &ge;15&rarr;-8<br/>
+                                                        <strong>C:</strong> 0-1&rarr;8 | 2-3&rarr;6 | 4&rarr;4 | 5&rarr;2 | 6&rarr;0 | 7&rarr;-2 | 8&rarr;-3 | 9&rarr;-4 | 10&rarr;-5 | 11-12&rarr;-6 | 13-14&rarr;-7 | &ge;15&rarr;-8
+                                                    </p>
+                                                </div>
+                                                <div className="bg-white p-3 rounded border">
+                                                    <h5 className="font-bold text-slate-900 mb-1.5 border-b pb-1 text-[11px]">NORMA CHANGE (Grafik 3)</h5>
+                                                    <p className="text-slate-600 leading-relaxed text-[10px]">
+                                                        <strong>D:</strong> &ge;15&rarr;8 | 11-14&rarr;7 | 7-10&rarr;6 | 4-6&rarr;4 | 2-3&rarr;2 | 0-1&rarr;0 | (-2)-(-1)&rarr;-1 | (-4)-(-3)&rarr;-2 | (-7)-(-5)&rarr;-4 | (-10)-(-8)&rarr;-6 | &le;-11&rarr;-8<br/>
+                                                        <strong>I:</strong> &ge;12&rarr;8 | 8-11&rarr;6 | 5-7&rarr;4 | 3-4&rarr;2 | 1-2&rarr;0 | 0&rarr;-1 | (-2)-(-1)&rarr;-2 | (-4)-(-3)&rarr;-4 | (-7)-(-5)&rarr;-6 | &le;-8&rarr;-8<br/>
+                                                        <strong>S:</strong> &ge;12&rarr;8 | 8-11&rarr;6 | 5-7&rarr;4 | 2-4&rarr;2 | 0-1&rarr;0 | (-2)-(-1)&rarr;-2 | (-4)-(-3)&rarr;-4 | (-7)-(-5)&rarr;-6 | &le;-8&rarr;-8<br/>
+                                                        <strong>C:</strong> &ge;11&rarr;8 | 7-10&rarr;6 | 4-6&rarr;4 | 2-3&rarr;2 | 0-1&rarr;0 | (-2)-(-1)&rarr;-2 | (-4)-(-3)&rarr;-4 | (-7)-(-5)&rarr;-6 | &le;-8&rarr;-8
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* SECTION 4: The Three Standard DISC Graphs side-by-side */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {renderSVGGraph(1, "Grafik 1 - Mask (Public Self)", scoringResult.scaleScores.g1)}
+                                    {renderSVGGraph(2, "Grafik 2 - Core (Private Self)", scoringResult.scaleScores.g2)}
+                                    {renderSVGGraph(3, "Grafik 3 - Mirror (Perceived Self)", scoringResult.scaleScores.g3)}
+                                </div>
+
+                                {/* SECTION 5: In-Depth Narrative Assessment & Reports */}
+                                <div className="space-y-6">
+                                    
+                                    {/* 1. Stress Analysis Panel */}
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm print-break">
+                                        <h3 className="font-bold text-slate-800 text-base mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                                            <i data-lucide="activity" className="text-rose-500"></i> Analisis Tingkat Stres & Kondisi Mental
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                                            <div className="space-y-4">
+                                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                                    <span className="text-xs text-slate-400 font-medium">Potensi Tekanan (Stress Level)</span>
+                                                    <p className="text-lg font-bold text-slate-800 mt-1">{analysisMetrics.stressLevel}</p>
+                                                    <p className="text-xs text-slate-500 mt-1">S-Movement: {analysisMetrics.sMovement} (Indikator pergeseran internal).</p>
+                                                </div>
+                                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                                    <span className="text-xs text-slate-400 font-medium">Sumber Utama Stress</span>
+                                                    <p className="text-lg font-bold text-slate-800 mt-1">{analysisMetrics.stressSource}</p>
+                                                    <p className="text-xs text-slate-500 mt-1">I-Movement: {analysisMetrics.iMovement} (Menentukan korelasi pekerjaan/pribadi).</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3 leading-relaxed text-xs text-slate-600">
+                                                <h4 className="font-bold text-slate-700">Analisis Perilaku Di Bawah Tekanan (Core Profile):</h4>
+                                                <p>
+                                                    Ketika berada di bawah tekanan, kandidat akan menunjukkan karakteristik insting aslinya yang ditunjukkan pada <strong>Grafik 2 (Core)</strong>. Pada grafik tersebut, dimensi dominan kandidat berada pada tipe <strong>{analysisMetrics.primaryCore}</strong>.
+                                                </p>
+                                                <p>
+                                                    Suhu stabilitas kerja kandidat saat ini berada pada pola <strong>{analysisMetrics.structuralShape}</strong>. {analysisMetrics.shapeNarrative || "Kandidat menunjukkan penyesuaian kerja yang relatif baik dan stabil dalam memenuhi tugas-tugas dari jabatannya harian."}
+                                                </p>
+                                                {analysisMetrics.transitionInsights.length > 0 && (
+                                                    <div className="mt-2 pt-2 border-t border-slate-100 space-y-1">
+                                                        <h5 className="font-bold text-slate-700 text-xs">Pola Transisi Khusus:</h5>
+                                                        {analysisMetrics.transitionInsights.map((ins, idx) => (
+                                                            <p key={idx} className="text-blue-600 font-medium text-xs">{ins}</p>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 2. Primary Personality Style Descriptions */}
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                        <h3 className="font-bold text-slate-800 text-base mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                                            <i data-lucide="award" className="text-blue-500"></i> Deskripsi Gaya Perilaku Inti
+                                        </h3>
+                                        
+                                        <div className="space-y-6">
+                                            {/* We iterate over any key that is part of the candidate's core style */}
+                                            {analysisMetrics.pattern.split('').map(dim => {
+                                                const meta = BEHAVIORAL_METADATA[dim];
+                                                if (!meta) return null;
+                                                return (
+                                                    <div key={dim} className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="inline-flex items-center justify-center bg-blue-600 text-white font-bold text-xs w-6 h-6 rounded-md">
+                                                                {dim}
+                                                            </span>
+                                                            <h4 className="font-bold text-slate-800 text-sm">{meta.title}</h4>
+                                                        </div>
+                                                        <p className="text-xs text-slate-600 leading-relaxed">{meta.desc}</p>
+                                                        
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs mt-2">
+                                                            <div>
+                                                                <h5 className="font-bold text-slate-700 mb-1">Motivator Perilaku:</h5>
+                                                                <ul className="list-disc list-inside space-y-1 text-slate-600">
+                                                                    {meta.motivators.map((m, i) => <li key={i}>{m}</li>)}
+                                                                </ul>
+                                                            </div>
+                                                            <div>
+                                                                <h5 className="font-bold text-slate-700 mb-1">Demotivator (Kondisi yang Dihindari):</h5>
+                                                                <ul className="list-disc list-inside space-y-1 text-slate-600">
+                                                                    {meta.demotivators.map((d, i) => <li key={i}>{d}</li>)}
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* 3. Career Guidelines Mapped from MMI Database */}
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm print-break">
+                                        <h3 className="font-bold text-slate-800 text-base mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                                            <i data-lucide="briefcase" className="text-emerald-500"></i> Rekomendasi Karier & Penempatan (Career Guidelines)
+                                        </h3>
+                                        {(() => {
+                                            const matched = matchPatternToGuidelines(analysisMetrics.pattern);
+                                            return (
+                                                <div className="space-y-4 text-xs">
+                                                    <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                                                        <span className="text-slate-400 font-semibold">Kelompok Pola Perilaku (Pattern Group)</span>
+                                                        <h4 className="text-base font-bold text-emerald-800 mt-1">High {analysisMetrics.pattern} - {matched.title}</h4>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <h5 className="font-bold text-slate-700 text-sm">Posisi Jabatan yang Direkomendasikan:</h5>
+                                                        <p className="text-slate-500 leading-relaxed mb-3">Berdasarkan data korelasi karir psikologi MMI, kandidat menunjukkan kecocokan penempatan tinggi pada bidang berikut:</p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {matched.jobs.map((job, idx) => (
+                                                                <span key={idx} className="bg-slate-100 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-semibold">
+                                                                    {job}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+
+                                    {/* 4. Actionable Self-Development Plans */}
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                        <h3 className="font-bold text-slate-800 text-base mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                                            <i data-lucide="trending-up" className="text-indigo-500"></i> Rencana Pengembangan Diri (Development Guidelines)
+                                        </h3>
+                                        <div className="space-y-4 text-xs leading-relaxed text-slate-600">
+                                            <p>Agar kandidat dapat bekerja dengan efektivitas maksimal, berikut adalah saran rencana aksi taktis yang direkomendasikan:</p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                {analysisMetrics.pattern.split('').map(dim => {
+                                                    const meta = BEHAVIORAL_METADATA[dim];
+                                                    if (!meta) return null;
+                                                    return (
+                                                        <div key={dim} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                                            <h5 className="font-bold text-slate-700 mb-2 flex items-center gap-1">
+                                                                <span className="bg-blue-600 text-white w-5 h-5 rounded-md inline-flex items-center justify-center font-bold text-[10px]">{dim}</span> 
+                                                                Lebih efektif jika:
+                                                            </h5>
+                                                            <ul className="list-disc list-inside space-y-1.5">
+                                                                {meta.effectiveness.map((eff, idx) => (
+                                                                    <li key={idx}>{eff}</li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        )}
+
+                    </main>
+
+                    {/* Footer System Indicator */}
+                    <footer className="bg-slate-900 text-slate-400 text-center py-4 text-xs mt-12 border-t border-slate-800 no-print">
+                        <div className="max-w-7xl mx-auto px-4">
+                            <p>© 2026 Iman N Bajuasijadji. Hak Cipta Dilindungi Undang-Undang.</p>
+                            <p className="text-[10px] text-slate-600 mt-1">Sistem Otomasi Psikometri & Penilaian Perilaku DISC MMI v1.2</p>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        // Render React components to DOM root on window loading
+        window.onload = function() {
+            const root = ReactDOM.createRoot(document.getElementById("root"));
+            root.render(<App />);
+            // Initialize Lucide icons
+            setTimeout(() => {
+                lucide.createIcons();
+            }, 500);
+        };
+    </script>
+</body>
+</html>
